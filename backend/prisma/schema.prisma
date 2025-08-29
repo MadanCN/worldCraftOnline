@@ -1,0 +1,102 @@
+// Generator: Tells Prisma to generate the JavaScript/TypeScript client
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Datasource: Defines which database we're using
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User Model - Stores user authentication and profile information
+model User {
+  id        String   @id @default(cuid()) // Unique identifier (CUID format)
+  email     String   @unique              // Must be unique across all users
+  username  String   @unique              // Must be unique across all users
+  password  String                        // Hashed password (never store plain text)
+  createdAt DateTime @default(now())      // Auto-set when user is created
+  updatedAt DateTime @updatedAt           // Auto-update when user is modified
+
+  // Relationships: One user can have many worlds
+  worlds World[]
+
+  // Database table name (maps to 'users' table in PostgreSQL)
+  @@map("users")
+}
+
+// World Model - Main container for all fictional world data
+model World {
+  id          String   @id @default(cuid()) // Unique world identifier
+  name        String                        // World name (e.g., "Middle-earth")
+  description String?                       // Optional world description
+  isPublic    Boolean  @default(false)      // Private by default, can be made public
+  createdAt   DateTime @default(now())      
+  updatedAt   DateTime @updatedAt
+
+  // Foreign key relationship: Each world belongs to one user
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // One-to-many relationships: One world can have many of each
+  characters Character[]
+  locations  Location[]
+  events     Event[]
+
+  @@map("worlds")
+}
+
+// Character Model - People, creatures, entities in your world
+model Character {
+  id          String   @id @default(cuid())
+  name        String                        // Character name
+  role        String?                       // Optional role (e.g., "Hero", "Villain", "King")
+  description String?                       // Character background, personality, etc.
+  imageUrl    String?                       // Optional character image (Cloudinary URL)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Foreign key: Each character belongs to one world
+  worldId String
+  world   World  @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  @@map("characters")
+}
+
+// Location Model - Places in your world with hierarchy support
+model Location {
+  id          String   @id @default(cuid())
+  name        String                        // Location name
+  type        String?                       // Optional type (e.g., "City", "Kingdom", "Forest")
+  description String?                       // Location details, history, etc.
+  imageUrl    String?                       // Optional location image
+  parentId    String?                       // Self-referencing for hierarchy (cities within kingdoms)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Foreign key: Each location belongs to one world
+  worldId String
+  world   World  @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  // Self-referencing relationship for hierarchy
+  parent   Location?  @relation("LocationHierarchy", fields: [parentId], references: [id])
+  children Location[] @relation("LocationHierarchy")
+
+  @@map("locations")
+}
+
+// Event Model - Timeline events, battles, important moments
+model Event {
+  id          String   @id @default(cuid())
+  name        String                        // Event name
+  date        String?                       // Optional date (flexible format for fictional calendars)
+  description String?                       // Event details, consequences, etc.
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Foreign key: Each event belongs to one world
+  worldId String
+  world   World  @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  @@map("events")
+}
