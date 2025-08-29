@@ -12,7 +12,7 @@ const Dashboard: React.FC = () => {
   const [newWorld, setNewWorld] = useState({ name: '', description: '' });
   const [creating, setCreating] = useState(false);
 
-  const { user } = useAuth();
+  //const { user } = useAuth();
 
   useEffect(() => {
     fetchWorlds();
